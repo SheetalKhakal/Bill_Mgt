@@ -76,49 +76,130 @@ class _CreateBillScreenState extends State<CreateBillScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final String currentDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
+
     return Scaffold(
-      appBar: AppBar(title: Text('Create Bill')),
+      appBar: AppBar(title: Text('Generate Invoice')),
       body: Form(
         key: _formKey,
         child: SingleChildScrollView(
           padding: EdgeInsets.all(16.0),
           child: Column(
             children: [
-              TextFormField(
-                controller: _customerNameController,
-                decoration: InputDecoration(labelText: 'Customer Name'),
-                validator: (value) => value!.isEmpty ? 'Required' : null,
-              ),
-              TextFormField(
-                controller: _contactNumberController,
-                decoration: InputDecoration(labelText: 'Contact Number'),
-                keyboardType: TextInputType.phone,
-                validator: (value) => value!.isEmpty ? 'Required' : null,
-              ),
-              Divider(),
               Text(
-                'Add Items',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                'Invoice Date : $currentDate',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
-              TextFormField(
-                controller: _itemNameController,
-                decoration: InputDecoration(labelText: 'Item Name'),
+              SizedBox(height: 16),
+              Container(
+                padding: EdgeInsets.all(10.0),
+                margin: EdgeInsets.symmetric(vertical: 8.0),
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey, width: 1.0),
+                  borderRadius: BorderRadius.circular(10.0),
+                  //  color: Colors.white, // Optional background color
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    TextFormField(
+                      controller: _customerNameController,
+                      decoration: InputDecoration(labelText: 'Customer Name'),
+                      validator: (value) => value!.isEmpty ? 'Required' : null,
+                    ),
+                    TextFormField(
+                      controller: _contactNumberController,
+                      decoration: InputDecoration(labelText: 'Contact Number'),
+                      keyboardType: TextInputType.phone,
+                      validator: (value) => value!.isEmpty ? 'Required' : null,
+                    ),
+                  ],
+                ),
               ),
-              TextFormField(
-                controller: _quantityController,
-                decoration: InputDecoration(labelText: 'Quantity'),
-                keyboardType: TextInputType.number,
+              Text(
+                'Product Details',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
-              TextFormField(
-                controller: _unitPriceController,
-                decoration: InputDecoration(labelText: 'Unit Price'),
-                keyboardType: TextInputType.number,
+              Container(
+                padding: EdgeInsets.all(10.0),
+                margin: EdgeInsets.symmetric(vertical: 8.0),
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey, width: 1.0),
+                  borderRadius: BorderRadius.circular(10.0),
+                  color: Colors.white, // Optional background color
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Product',
+                          style: TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.bold),
+                        ),
+                        Row(
+                          children: [
+                            IconButton(
+                              icon: Icon(
+                                Icons.edit,
+                                color: Colors.blue,
+                              ),
+                              onPressed: () {
+                                // Handle Edit action
+                              },
+                            ),
+                            IconButton(
+                              icon: Icon(Icons.delete, color: Colors.red),
+                              onPressed: () {
+                                // Handle Delete action
+                              },
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    //      SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(
+                          flex: 1,
+                          child: TextFormField(
+                            controller: _itemNameController,
+                            decoration: InputDecoration(labelText: 'Item Name'),
+                          ),
+                        ),
+                        SizedBox(width: 8),
+                        Expanded(
+                          flex: 1,
+                          child: TextFormField(
+                            controller: _quantityController,
+                            decoration: InputDecoration(labelText: 'Quantity'),
+                            keyboardType: TextInputType.number,
+                          ),
+                        ),
+                        SizedBox(width: 8),
+                        Expanded(
+                          flex: 1,
+                          child: TextFormField(
+                            controller: _unitPriceController,
+                            decoration:
+                                InputDecoration(labelText: 'Unit Price'),
+                            keyboardType: TextInputType.number,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
               ElevatedButton(
                 onPressed: _addItem,
                 child: Text('Add Item'),
               ),
               Divider(),
+              SizedBox(height: 16),
               ListView.builder(
                 shrinkWrap: true,
                 itemCount: items.length,

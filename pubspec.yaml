@@ -38,6 +38,9 @@ dependencies:
   sqflite: ^2.0.0+4
   path: ^1.8.0
   intl: ^0.18.0
+  bluetooth_print_plus: ^1.0.5   
+  pdf: ^3.6.0   
+  csv: ^5.0.2
 
 dev_dependencies:
   flutter_test:

@@ -1,51 +1,116 @@
 // ignore_for_file: prefer_const_constructors
 
-import 'package:bill_management/models/bill_model.dart';
 import 'package:flutter/material.dart';
+import 'package:bill_management/database_helper.dart';
 
-class ViewBillScreen extends StatelessWidget {
-  final BillModel bill;
+class ViewBillScreen extends StatefulWidget {
+  final Map<String, dynamic> bill;
 
   ViewBillScreen({required this.bill});
 
   @override
+  _ViewBillScreenState createState() => _ViewBillScreenState();
+}
+
+class _ViewBillScreenState extends State<ViewBillScreen> {
+  late bool isPaid;
+  late Map<String, dynamic> bill; // Mutable copy of the bill
+  List<Map<String, dynamic>> items = [];
+
+  @override
+  void initState() {
+    super.initState();
+    bill = Map.from(widget.bill); // Create a mutable copy of the bill
+    isPaid = bill['isPaid'] == 1; // Initialize the toggle state
+    _loadItems();
+  }
+
+  // Load items associated with the bill
+  void _loadItems() async {
+    final db = DatabaseHelper();
+    final fetchedItems = await db.getItemsByBillId(bill['id']);
+    setState(() {
+      items = fetchedItems;
+    });
+  }
+
+  // Toggle the payment status and update the database
+  Future<void> _togglePaidStatus() async {
+    // Toggle the status before updating the database
+    bool updatedStatus = !isPaid;
+
+    // Update the local state
+    setState(() {
+      isPaid = updatedStatus;
+    });
+
+    // Update the database
+    final db = DatabaseHelper();
+    await db.updateBillStatus(bill['id'], updatedStatus ? 1 : 0);
+
+    // Update the local mutable copy of the bill
+    bill['isPaid'] = updatedStatus ? 1 : 0;
+
+    // Ensure the UI is updated before navigating back
+    if (mounted) {
+      Navigator.pop(context, bill);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('View Bill')),
+      appBar: AppBar(title: Text('Bill Details')),
       body: Padding(
-        padding: const EdgeInsets.all(8.0),
+        padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Customer: ${bill.customerName}',
-                style: TextStyle(fontSize: 18)),
-            Text('Contact: ${bill.contactNumber}',
-                style: TextStyle(fontSize: 18)),
+            Text(
+              'Customer Name: ${bill['customerName']}',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 8),
+            Text('Contact: ${bill['contactNumber']}'),
+            SizedBox(height: 8),
             Divider(),
+            Text(
+              'Items:',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
             Expanded(
               child: ListView.builder(
-                itemCount: bill.items.length,
+                itemCount: items.length,
                 itemBuilder: (context, index) {
-                  final item = bill.items[index];
+                  final item = items[index];
                   return ListTile(
-                    title: Text('${item.quantity} x ${item.itemName}'),
-                    subtitle: Text(
-                        'Unit Price: \$${item.unitPrice.toStringAsFixed(2)}'),
-                    trailing: Text(
-                        'Total: \$${(item.quantity * item.unitPrice).toStringAsFixed(2)}'),
+                    title: Text(item['itemName']),
+                    subtitle: Text('Price: ${item['unitPrice']}'),
+                    trailing: Text('Quantity: ${item['quantity']}'),
                   );
                 },
               ),
             ),
             Divider(),
-            Text('Total: \$${bill.totalAmount.toStringAsFixed(2)}',
-                style: TextStyle(fontSize: 18)),
-            SwitchListTile(
-              title: Text('Mark as Paid'),
-              value: bill.isPaid,
-              onChanged: (value) {
-                // Update bill status in storage.
-              },
+            Text(
+              'Total Amount: ${bill['totalAmount']}',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Status: ${isPaid ? 'Paid' : 'Unpaid'}',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                Switch(
+                  value: isPaid,
+                  onChanged: (value) async {
+                    await _togglePaidStatus();
+                  },
+                ),
+              ],
             ),
           ],
         ),
