@@ -1,4 +1,4 @@
-// ignore_for_file: prefer_const_constructors, use_key_in_widget_constructors, library_private_types_in_public_api
+// ignore_for_file: prefer_const_constructors, use_key_in_widget_constructors, library_private_types_in_public_api, prefer_typing_uninitialized_variables, prefer_const_literals_to_create_immutables
 
 import 'package:bill_management/database_helper.dart';
 import 'package:flutter/material.dart';
@@ -16,6 +16,8 @@ class _CreateBillScreenState extends State<CreateBillScreen> {
   final _itemNameController = TextEditingController();
   final _quantityController = TextEditingController();
   final _unitPriceController = TextEditingController();
+
+  int invoiceNumber = 1;
 
   List<Map<String, dynamic>> items = [];
   double totalAmount = 0.0;
@@ -46,14 +48,13 @@ class _CreateBillScreenState extends State<CreateBillScreen> {
     if (_formKey.currentState!.validate()) {
       final customerName = _customerNameController.text.trim();
       final contactNumber = _contactNumberController.text.trim();
-      final date = DateFormat('yyyy-MM-dd HH:mm:ss')
-          .format(DateTime.now()); // Properly formatted date
+      final date = DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now());
 
       final newBill = {
         'customerName': customerName,
         'contactNumber': contactNumber,
         'totalAmount': totalAmount,
-        'isPaid': 0, // Default to unpaid
+        'isPaid': 0,
         'date': date,
       };
 
@@ -70,13 +71,33 @@ class _CreateBillScreenState extends State<CreateBillScreen> {
         await db.insertItem(newItem);
       }
 
-      Navigator.pop(context, true); // Pass true to indicate success
+      Navigator.pop(context, true);
     }
+  }
+
+  void _fetchInvoiceNumber() async {
+    final db = DatabaseHelper();
+    final lastInvoiceId = await db.getLastInvoiceId();
+
+    setState(() {
+      if (lastInvoiceId is int) {
+        // Safely increment the last invoice ID.
+        invoiceNumber = lastInvoiceId + 1;
+      } else {
+        invoiceNumber = 1; // Default to 1 if the value isn't an integer.
+      }
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchInvoiceNumber();
   }
 
   @override
   Widget build(BuildContext context) {
-    final String currentDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    final String currentDate = DateFormat('dd/MM/yyyy').format(DateTime.now());
 
     return Scaffold(
       appBar: AppBar(title: Text('Generate Invoice')),
@@ -86,18 +107,54 @@ class _CreateBillScreenState extends State<CreateBillScreen> {
           padding: EdgeInsets.all(16.0),
           child: Column(
             children: [
-              Text(
-                'Invoice Date : $currentDate',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              Container(
+                padding: EdgeInsets.all(8.0),
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey, width: 0.5),
+                  borderRadius: BorderRadius.circular(10.0),
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Invoice No.',
+                          style: TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.bold),
+                        ),
+                        Text(
+                          'Invoice Date',
+                          style: TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          '$invoiceNumber',
+                          style: TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.bold),
+                        ),
+                        Text(
+                          currentDate,
+                          style: TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
               SizedBox(height: 16),
               Container(
-                padding: EdgeInsets.all(10.0),
+                padding: EdgeInsets.all(8.0),
                 margin: EdgeInsets.symmetric(vertical: 8.0),
                 decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey, width: 1.0),
+                  border: Border.all(color: Colors.grey, width: 0.5),
                   borderRadius: BorderRadius.circular(10.0),
-                  //  color: Colors.white, // Optional background color
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -121,46 +178,19 @@ class _CreateBillScreenState extends State<CreateBillScreen> {
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
               Container(
-                padding: EdgeInsets.all(10.0),
-                margin: EdgeInsets.symmetric(vertical: 8.0),
+                padding: EdgeInsets.all(8.0),
                 decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey, width: 1.0),
+                  border: Border.all(color: Colors.grey, width: 0.5),
                   borderRadius: BorderRadius.circular(10.0),
-                  color: Colors.white, // Optional background color
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Product',
-                          style: TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.bold),
-                        ),
-                        Row(
-                          children: [
-                            IconButton(
-                              icon: Icon(
-                                Icons.edit,
-                                color: Colors.blue,
-                              ),
-                              onPressed: () {
-                                // Handle Edit action
-                              },
-                            ),
-                            IconButton(
-                              icon: Icon(Icons.delete, color: Colors.red),
-                              onPressed: () {
-                                // Handle Delete action
-                              },
-                            ),
-                          ],
-                        ),
-                      ],
+                    Text(
+                      'Product',
+                      style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     ),
-                    //      SizedBox(height: 16),
                     Row(
                       children: [
                         Expanded(
@@ -194,35 +224,131 @@ class _CreateBillScreenState extends State<CreateBillScreen> {
                   ],
                 ),
               ),
-              ElevatedButton(
-                onPressed: _addItem,
-                child: Text('Add Item'),
+              SizedBox(
+                width: 400,
+                child: ElevatedButton(
+                  onPressed: _addItem,
+                  child: Text('Add Product'),
+                ),
               ),
               Divider(),
+              items.isNotEmpty
+                  ? Container(
+                      padding: EdgeInsets.all(5.0),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey, width: 0.5),
+                        borderRadius: BorderRadius.circular(10.0),
+                      ),
+                      child: ListView.builder(
+                        shrinkWrap: true,
+                        itemCount: items.length,
+                        itemBuilder: (context, index) {
+                          final item = items[index];
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    'Product',
+                                    style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold),
+                                  ),
+                                  Row(
+                                    children: [
+                                      IconButton(
+                                        icon: Icon(
+                                          Icons.edit,
+                                          color: Colors.blue,
+                                        ),
+                                        onPressed: () {
+                                          // Handle Edit action
+                                          _itemNameController.text =
+                                              item['itemName'];
+                                          _quantityController.text =
+                                              item['quantity'].toString();
+                                          _unitPriceController.text =
+                                              item['unitPrice'].toString();
+                                          setState(() {
+                                            totalAmount -= item['totalPrice'];
+                                            items.removeAt(index);
+                                          });
+                                        },
+                                      ),
+                                      IconButton(
+                                        icon: Icon(Icons.delete,
+                                            color: Colors.red),
+                                        onPressed: () {
+                                          // Handle Delete action
+                                          setState(() {
+                                            totalAmount -= item['totalPrice'];
+                                            items.removeAt(index);
+                                          });
+                                        },
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  // Item Name
+                                  Text(
+                                    '${item['itemName']}',
+                                    style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.normal),
+                                  ),
+
+                                  // Quantity and Unit Price
+                                  Text(
+                                    '${item['quantity']} x ₹${item['unitPrice'].toStringAsFixed(2)}',
+                                    style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.normal),
+                                  ),
+
+                                  // Total Price
+                                  Text(
+                                    '₹${item['totalPrice'].toStringAsFixed(2)}',
+                                    style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.normal),
+                                  ),
+                                ],
+                              )
+                            ],
+                          );
+                        },
+                      ),
+                    )
+                  : SizedBox.shrink(),
               SizedBox(height: 16),
-              ListView.builder(
-                shrinkWrap: true,
-                itemCount: items.length,
-                itemBuilder: (context, index) {
-                  final item = items[index];
-                  return ListTile(
-                    title: Text('${item['itemName']}'),
-                    subtitle: Text(
-                        '${item['quantity']} x \$${item['unitPrice'].toStringAsFixed(2)}'),
-                    trailing: Text(
-                        'Total: \$${item['totalPrice'].toStringAsFixed(2)}'),
-                  );
-                },
-              ),
-              Divider(),
-              Text(
-                'Total Amount: \$${totalAmount.toStringAsFixed(2)}',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Total Amount:',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  Text(
+                    '  ₹${totalAmount.toStringAsFixed(2)}',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                ],
               ),
               SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: _saveBill,
-                child: Text('Save Bill'),
+              SizedBox(
+                width: 400,
+                child: ElevatedButton(
+                  onPressed: _saveBill,
+                  child: Text('Save Bill'),
+                ),
               ),
             ],
           ),

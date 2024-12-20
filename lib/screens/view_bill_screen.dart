@@ -1,7 +1,8 @@
-// ignore_for_file: prefer_const_constructors
+// ignore_for_file: prefer_const_constructors, prefer_const_literals_to_create_immutables
 
 import 'package:flutter/material.dart';
 import 'package:bill_management/database_helper.dart';
+import 'package:intl/intl.dart';
 
 class ViewBillScreen extends StatefulWidget {
   final Map<String, dynamic> bill;
@@ -14,18 +15,18 @@ class ViewBillScreen extends StatefulWidget {
 
 class _ViewBillScreenState extends State<ViewBillScreen> {
   late bool isPaid;
-  late Map<String, dynamic> bill; // Mutable copy of the bill
+  late Map<String, dynamic> bill;
   List<Map<String, dynamic>> items = [];
+  final date = DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now());
 
   @override
   void initState() {
     super.initState();
-    bill = Map.from(widget.bill); // Create a mutable copy of the bill
-    isPaid = bill['isPaid'] == 1; // Initialize the toggle state
+    bill = Map.from(widget.bill);
+    isPaid = bill['isPaid'] == 1;
     _loadItems();
   }
 
-  // Load items associated with the bill
   void _loadItems() async {
     final db = DatabaseHelper();
     final fetchedItems = await db.getItemsByBillId(bill['id']);
@@ -34,24 +35,24 @@ class _ViewBillScreenState extends State<ViewBillScreen> {
     });
   }
 
-  // Toggle the payment status and update the database
+  Future<void> _deleteBill() async {
+    final db = DatabaseHelper();
+    await db.deleteBill(bill['id']); // Delete the bill and its items
+    Navigator.pop(context, 'deleted'); // Return a "deleted" status to HomePage
+  }
+
   Future<void> _togglePaidStatus() async {
-    // Toggle the status before updating the database
     bool updatedStatus = !isPaid;
 
-    // Update the local state
     setState(() {
       isPaid = updatedStatus;
     });
 
-    // Update the database
     final db = DatabaseHelper();
     await db.updateBillStatus(bill['id'], updatedStatus ? 1 : 0);
 
-    // Update the local mutable copy of the bill
     bill['isPaid'] = updatedStatus ? 1 : 0;
 
-    // Ensure the UI is updated before navigating back
     if (mounted) {
       Navigator.pop(context, bill);
     }
@@ -59,42 +60,180 @@ class _ViewBillScreenState extends State<ViewBillScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final String currentDate = DateFormat('dd/MM/yyyy').format(DateTime.now());
+
     return Scaffold(
-      appBar: AppBar(title: Text('Bill Details')),
+      appBar: AppBar(
+        title: Text('Bill Details'),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.delete),
+            onPressed: () async {
+              bool confirm = await showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: Text('Delete Bill'),
+                  content: Text('Are you sure you want to delete this bill?'),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, false),
+                      child: Text('Cancel'),
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, true),
+                      child: Text('Delete'),
+                    ),
+                  ],
+                ),
+              );
+
+              if (confirm == true) {
+                await _deleteBill();
+              }
+            },
+          ),
+        ],
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Customer Name: ${bill['customerName']}',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            Container(
+              padding: EdgeInsets.all(8.0),
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey, width: 0.5),
+                borderRadius: BorderRadius.circular(10.0),
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Invoice No.',
+                        style: TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
+                      Text(
+                        'Invoice Date',
+                        style: TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        '${bill['id']} ',
+                        style: TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
+                      Text(
+                        currentDate,
+                        style: TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-            SizedBox(height: 8),
-            Text('Contact: ${bill['contactNumber']}'),
-            SizedBox(height: 8),
+            SizedBox(height: 16),
+            Container(
+              padding: EdgeInsets.all(8.0),
+              margin: EdgeInsets.symmetric(vertical: 8.0),
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey, width: 0.5),
+                borderRadius: BorderRadius.circular(10.0),
+              ),
+              child: Row(
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Customer Name: ${bill['customerName']}',
+                        style: TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.normal),
+                      ),
+                      Text(
+                        'Contact Number : ${bill['contactNumber']}',
+                        style: TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.normal),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
             Divider(),
             Text(
-              'Items:',
+              'Product List:',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(
+              height: 8,
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Items',
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                ),
+                Text(
+                  'Quantity',
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                ),
+                Text(
+                  'Price',
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                ),
+              ],
             ),
             Expanded(
               child: ListView.builder(
                 itemCount: items.length,
                 itemBuilder: (context, index) {
                   final item = items[index];
-                  return ListTile(
-                    title: Text(item['itemName']),
-                    subtitle: Text('Price: ${item['unitPrice']}'),
-                    trailing: Text('Quantity: ${item['quantity']}'),
+                  return Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        '${item['itemName']}',
+                        style: TextStyle(
+                            fontSize: 14, fontWeight: FontWeight.normal),
+                      ),
+                      Text(
+                        textAlign: TextAlign.start,
+                        '${item['quantity']} ',
+                        style: TextStyle(fontSize: 14),
+                      ),
+                      Text(
+                        ' ₹${item['unitPrice'].toStringAsFixed(2)}',
+                        style: TextStyle(
+                            fontSize: 14, fontWeight: FontWeight.normal),
+                      ),
+                    ],
                   );
                 },
               ),
             ),
             Divider(),
-            Text(
-              'Total Amount: ${bill['totalAmount']}',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Total Amount:',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                Text(
+                  '  ₹${bill['totalAmount']}',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+              ],
             ),
             SizedBox(height: 16),
             Row(

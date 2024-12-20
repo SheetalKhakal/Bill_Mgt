@@ -23,16 +23,14 @@ class _HomePageState extends State<HomePage> {
     final db = DatabaseHelper();
     final fetchedBills = await db.getBills();
     setState(() {
-      bills = fetchedBills;
+      bills =
+          List<Map<String, dynamic>>.from(fetchedBills); // Ensure mutability
     });
   }
 
-  void _updateBillInList(Map<String, dynamic> updatedBill) {
+  void _removeBillFromList(int billId) {
     setState(() {
-      final index = bills.indexWhere((bill) => bill['id'] == updatedBill['id']);
-      if (index != -1) {
-        bills[index] = updatedBill; // Update the specific bill in the list
-      }
+      bills.removeWhere((bill) => bill['id'] == billId);
     });
   }
 
@@ -46,7 +44,8 @@ class _HomePageState extends State<HomePage> {
           final bill = bills[index];
           return ListTile(
             title: Text(bill['customerName']),
-            subtitle: Text('Total: ${bill['totalAmount']} - ${bill['date']}'),
+            subtitle:
+                Text('Total: ₹${bill['totalAmount']}   - ${bill['date']}'),
             trailing: Text(
               bill['isPaid'] == 1 ? 'Paid' : 'Unpaid',
               style: TextStyle(
@@ -55,14 +54,23 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
             onTap: () async {
-              final updatedBill = await Navigator.push(
+              final result = await Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder: (context) => ViewBillScreen(bill: bill),
                 ),
               );
-              if (updatedBill != null) {
-                _updateBillInList(updatedBill);
+
+              if (result == 'deleted') {
+                _removeBillFromList(bill['id']);
+              } else if (result != null) {
+                setState(() {
+                  final index =
+                      bills.indexWhere((b) => b['id'] == result['id']);
+                  if (index != -1) {
+                    bills[index] = result;
+                  }
+                });
               }
             },
           );

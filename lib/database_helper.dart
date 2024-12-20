@@ -96,33 +96,33 @@ class DatabaseHelper {
     );
   }
 
-  // Future<Map<String, dynamic>> fetchBillWithItems(int billId) async {
-  //   final db = await database;
+  Future<Object?> getLastInvoiceId() async {
+    final db = await database; // Get the database instance.
+    final result = await db.rawQuery('SELECT MAX(id) as lastId FROM bills');
 
-  //   // Fetch the bill details
-  //   final billResults = await db.query(
-  //     'bills',
-  //     where: 'id = ?',
-  //     whereArgs: [billId],
-  //   );
+    // Return the last invoice ID as an object.
+    if (result.isNotEmpty && result.first['lastId'] != null) {
+      return result.first['lastId'];
+    } else {
+      return 0; // Default value if no records exist.
+    }
+  }
 
-  //   if (billResults.isEmpty) {
-  //     throw Exception("Bill with id $billId not found");
-  //   }
+  Future<int> deleteBill(int billId) async {
+    final db = await database;
+    return await db.delete(
+      'bills',
+      where: 'id = ?',
+      whereArgs: [billId],
+    );
+  }
 
-  //   final bill = billResults.first;
-
-  //   // Fetch the associated items
-  //   final itemResults = await db.query(
-  //     'items',
-  //     where: 'billId = ?',
-  //     whereArgs: [billId],
-  //   );
-
-  //   // Combine bill and items into a single map
-  //   return {
-  //     ...bill,
-  //     'items': itemResults,
-  //   };
-  // }
+  Future<int> deleteItemsByBillId(int billId) async {
+    final db = await database;
+    return await db.delete(
+      'items',
+      where: 'billId = ?',
+      whereArgs: [billId],
+    );
+  }
 }
