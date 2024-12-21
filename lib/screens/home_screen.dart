@@ -23,8 +23,7 @@ class _HomePageState extends State<HomePage> {
     final db = DatabaseHelper();
     final fetchedBills = await db.getBills();
     setState(() {
-      bills =
-          List<Map<String, dynamic>>.from(fetchedBills); // Ensure mutability
+      bills = List<Map<String, dynamic>>.from(fetchedBills);
     });
   }
 

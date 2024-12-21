@@ -67,16 +67,6 @@ class DatabaseHelper {
     return await db.query('bills');
   }
 
-  Future<List<Map<String, dynamic>>> fetchBills() async {
-    final db = await database;
-    return db.query('bills');
-  }
-
-  Future<List<Map<String, dynamic>>> fetchItems(int billId) async {
-    final db = await database;
-    return db.query('items', where: 'billId = ?', whereArgs: [billId]);
-  }
-
   Future<void> updateBillStatus(int billId, int status) async {
     final db = await database;
     await db.update(
@@ -97,14 +87,13 @@ class DatabaseHelper {
   }
 
   Future<Object?> getLastInvoiceId() async {
-    final db = await database; // Get the database instance.
+    final db = await database;
     final result = await db.rawQuery('SELECT MAX(id) as lastId FROM bills');
 
-    // Return the last invoice ID as an object.
     if (result.isNotEmpty && result.first['lastId'] != null) {
       return result.first['lastId'];
     } else {
-      return 0; // Default value if no records exist.
+      return 0;
     }
   }
 
@@ -113,15 +102,6 @@ class DatabaseHelper {
     return await db.delete(
       'bills',
       where: 'id = ?',
-      whereArgs: [billId],
-    );
-  }
-
-  Future<int> deleteItemsByBillId(int billId) async {
-    final db = await database;
-    return await db.delete(
-      'items',
-      where: 'billId = ?',
       whereArgs: [billId],
     );
   }

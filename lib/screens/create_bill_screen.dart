@@ -81,10 +81,9 @@ class _CreateBillScreenState extends State<CreateBillScreen> {
 
     setState(() {
       if (lastInvoiceId is int) {
-        // Safely increment the last invoice ID.
         invoiceNumber = lastInvoiceId + 1;
       } else {
-        invoiceNumber = 1; // Default to 1 if the value isn't an integer.
+        invoiceNumber = 1;
       }
     });
   }
@@ -165,11 +164,19 @@ class _CreateBillScreenState extends State<CreateBillScreen> {
                       validator: (value) => value!.isEmpty ? 'Required' : null,
                     ),
                     TextFormField(
-                      controller: _contactNumberController,
-                      decoration: InputDecoration(labelText: 'Contact Number'),
-                      keyboardType: TextInputType.phone,
-                      validator: (value) => value!.isEmpty ? 'Required' : null,
-                    ),
+                        controller: _contactNumberController,
+                        decoration:
+                            InputDecoration(labelText: 'Contact Number'),
+                        keyboardType: TextInputType.phone,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Required';
+                          } else if (value.length != 10 ||
+                              !RegExp(r'^\d+$').hasMatch(value)) {
+                            return 'Enter a valid 10-digit contact number.';
+                          }
+                          return null;
+                        }),
                   ],
                 ),
               ),
@@ -198,6 +205,8 @@ class _CreateBillScreenState extends State<CreateBillScreen> {
                           child: TextFormField(
                             controller: _itemNameController,
                             decoration: InputDecoration(labelText: 'Item Name'),
+                            validator: (value) =>
+                                value!.isEmpty ? 'Required' : null,
                           ),
                         ),
                         SizedBox(width: 8),
@@ -207,6 +216,8 @@ class _CreateBillScreenState extends State<CreateBillScreen> {
                             controller: _quantityController,
                             decoration: InputDecoration(labelText: 'Quantity'),
                             keyboardType: TextInputType.number,
+                            validator: (value) =>
+                                value!.isEmpty ? 'Required' : null,
                           ),
                         ),
                         SizedBox(width: 8),
@@ -217,6 +228,8 @@ class _CreateBillScreenState extends State<CreateBillScreen> {
                             decoration:
                                 InputDecoration(labelText: 'Unit Price'),
                             keyboardType: TextInputType.number,
+                            validator: (value) =>
+                                value!.isEmpty ? 'Required' : null,
                           ),
                         ),
                       ],
@@ -265,7 +278,6 @@ class _CreateBillScreenState extends State<CreateBillScreen> {
                                           color: Colors.blue,
                                         ),
                                         onPressed: () {
-                                          // Handle Edit action
                                           _itemNameController.text =
                                               item['itemName'];
                                           _quantityController.text =
@@ -282,7 +294,6 @@ class _CreateBillScreenState extends State<CreateBillScreen> {
                                         icon: Icon(Icons.delete,
                                             color: Colors.red),
                                         onPressed: () {
-                                          // Handle Delete action
                                           setState(() {
                                             totalAmount -= item['totalPrice'];
                                             items.removeAt(index);
@@ -297,23 +308,18 @@ class _CreateBillScreenState extends State<CreateBillScreen> {
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,
                                 children: [
-                                  // Item Name
                                   Text(
                                     '${item['itemName']}',
                                     style: TextStyle(
                                         fontSize: 14,
                                         fontWeight: FontWeight.normal),
                                   ),
-
-                                  // Quantity and Unit Price
                                   Text(
                                     '${item['quantity']} x ₹${item['unitPrice'].toStringAsFixed(2)}',
                                     style: TextStyle(
                                         fontSize: 14,
                                         fontWeight: FontWeight.normal),
                                   ),
-
-                                  // Total Price
                                   Text(
                                     '₹${item['totalPrice'].toStringAsFixed(2)}',
                                     style: TextStyle(
@@ -337,7 +343,7 @@ class _CreateBillScreenState extends State<CreateBillScreen> {
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   Text(
-                    '  ₹${totalAmount.toStringAsFixed(2)}',
+                    '₹${totalAmount.toStringAsFixed(2)}',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                 ],

@@ -37,8 +37,8 @@ class _ViewBillScreenState extends State<ViewBillScreen> {
 
   Future<void> _deleteBill() async {
     final db = DatabaseHelper();
-    await db.deleteBill(bill['id']); // Delete the bill and its items
-    Navigator.pop(context, 'deleted'); // Return a "deleted" status to HomePage
+    await db.deleteBill(bill['id']);
+    Navigator.pop(context, 'deleted');
   }
 
   Future<void> _togglePaidStatus() async {
@@ -67,7 +67,7 @@ class _ViewBillScreenState extends State<ViewBillScreen> {
         title: Text('Bill Details'),
         actions: [
           IconButton(
-            icon: Icon(Icons.delete),
+            icon: Icon(Icons.delete, color: Colors.red),
             onPressed: () async {
               bool confirm = await showDialog(
                 context: context,
