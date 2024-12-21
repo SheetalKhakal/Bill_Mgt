@@ -99,7 +99,10 @@ class _CreateBillScreenState extends State<CreateBillScreen> {
     final String currentDate = DateFormat('dd/MM/yyyy').format(DateTime.now());
 
     return Scaffold(
-      appBar: AppBar(title: Text('Generate Invoice')),
+      appBar: AppBar(
+        title: Text('Generate Invoice'),
+        backgroundColor: Colors.blue[50],
+      ),
       body: Form(
         key: _formKey,
         child: SingleChildScrollView(

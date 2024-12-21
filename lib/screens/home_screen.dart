@@ -76,6 +76,7 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Bill Management'),
+        backgroundColor: Colors.blue[50],
         actions: [
           PopupMenuButton<String>(
             onSelected: (value) {
@@ -91,13 +92,13 @@ class _HomePageState extends State<HomePage> {
             ],
             child: Icon(
               Icons.filter_list,
-              color: Colors.cyan,
+              color: Colors.cyanAccent[700],
             ),
           ),
           IconButton(
             icon: Icon(
               Icons.calendar_today,
-              color: Colors.blue,
+              color: Colors.deepPurple,
             ),
             onPressed: _pickDate,
           ),

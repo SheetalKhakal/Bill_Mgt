@@ -65,6 +65,7 @@ class _ViewBillScreenState extends State<ViewBillScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Bill Details'),
+        backgroundColor: Colors.blue[50],
         actions: [
           IconButton(
             icon: Icon(Icons.delete, color: Colors.red),
