@@ -1,4 +1,4 @@
-// ignore_for_file: use_key_in_widget_constructors, prefer_const_constructors
+// ignore_for_file: prefer_const_constructors
 
 import 'package:bill_management/database_helper.dart';
 import 'package:bill_management/screens/create_bill_screen.dart';
@@ -12,6 +12,9 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   List<Map<String, dynamic>> bills = [];
+  List<Map<String, dynamic>> filteredBills = [];
+  String selectedStatus = 'All';
+  DateTime? selectedDate;
 
   @override
   void initState() {
@@ -24,23 +27,86 @@ class _HomePageState extends State<HomePage> {
     final fetchedBills = await db.getBills();
     setState(() {
       bills = List<Map<String, dynamic>>.from(fetchedBills);
+      filteredBills = bills;
     });
+  }
+
+  void _filterBills() {
+    setState(() {
+      filteredBills = bills.where((bill) {
+        final billDate = DateTime.parse(bill['date']);
+        final matchesStatus = selectedStatus == 'All' ||
+            (selectedStatus == 'Paid' && bill['isPaid'] == 1) ||
+            (selectedStatus == 'Unpaid' && bill['isPaid'] == 0);
+
+        final matchesDate = selectedDate == null ||
+            (billDate.year == selectedDate!.year &&
+                billDate.month == selectedDate!.month &&
+                billDate.day == selectedDate!.day);
+
+        return matchesStatus && matchesDate;
+      }).toList();
+    });
+  }
+
+  Future<void> _pickDate() async {
+    final pickedDate = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime.now(),
+    );
+    if (pickedDate != null) {
+      setState(() {
+        selectedDate = pickedDate;
+      });
+      _filterBills();
+    }
   }
 
   void _removeBillFromList(int billId) {
     setState(() {
       bills.removeWhere((bill) => bill['id'] == billId);
+      filteredBills.removeWhere((bill) => bill['id'] == billId);
     });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Bill Management')),
+      appBar: AppBar(
+        title: Text('Bill Management'),
+        actions: [
+          PopupMenuButton<String>(
+            onSelected: (value) {
+              setState(() {
+                selectedStatus = value;
+              });
+              _filterBills();
+            },
+            itemBuilder: (context) => [
+              PopupMenuItem(value: 'All', child: Text('All')),
+              PopupMenuItem(value: 'Paid', child: Text('Paid')),
+              PopupMenuItem(value: 'Unpaid', child: Text('Unpaid')),
+            ],
+            child: Icon(
+              Icons.filter_list,
+              color: Colors.cyan,
+            ),
+          ),
+          IconButton(
+            icon: Icon(
+              Icons.calendar_today,
+              color: Colors.blue,
+            ),
+            onPressed: _pickDate,
+          ),
+        ],
+      ),
       body: ListView.builder(
-        itemCount: bills.length,
+        itemCount: filteredBills.length,
         itemBuilder: (context, index) {
-          final bill = bills[index];
+          final bill = filteredBills[index];
           return ListTile(
             title: Text(bill['customerName']),
             subtitle:
@@ -69,6 +135,7 @@ class _HomePageState extends State<HomePage> {
                   if (index != -1) {
                     bills[index] = result;
                   }
+                  _filterBills();
                 });
               }
             },
