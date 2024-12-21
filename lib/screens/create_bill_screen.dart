@@ -208,8 +208,6 @@ class _CreateBillScreenState extends State<CreateBillScreen> {
                           child: TextFormField(
                             controller: _itemNameController,
                             decoration: InputDecoration(labelText: 'Item Name'),
-                            validator: (value) =>
-                                value!.isEmpty ? 'Required' : null,
                           ),
                         ),
                         SizedBox(width: 8),
@@ -219,8 +217,6 @@ class _CreateBillScreenState extends State<CreateBillScreen> {
                             controller: _quantityController,
                             decoration: InputDecoration(labelText: 'Quantity'),
                             keyboardType: TextInputType.number,
-                            validator: (value) =>
-                                value!.isEmpty ? 'Required' : null,
                           ),
                         ),
                         SizedBox(width: 8),
@@ -231,8 +227,6 @@ class _CreateBillScreenState extends State<CreateBillScreen> {
                             decoration:
                                 InputDecoration(labelText: 'Unit Price'),
                             keyboardType: TextInputType.number,
-                            validator: (value) =>
-                                value!.isEmpty ? 'Required' : null,
                           ),
                         ),
                       ],
